@@ -1,0 +1,87 @@
+plugins {
+    id 'java'
+    id 'scala'
+
+    id "com.commercehub.gradle.plugin.avro" version "0.9.1"
+    id 'com.github.johnrengelman.shadow' version '5.0.0'
+
+    // Apply the application plugin to add support for building an application
+    // id 'application'
+}
+
+repositories {
+    // Use jcenter for resolving your dependencies.
+    // You can declare any Maven/Ivy/file repository here.
+    jcenter()
+}
+
+sourceSets {
+    main {
+        scala {
+            srcDirs = ['src/main/scala','src/main/java']
+        }
+        java {
+            srcDirs = []
+        }
+    }
+}
+
+
+//configurations.all {
+//    resolutionStrategy {
+//
+////        force 'com.fasterxml.jackson.core:jackson-core:2.9.9'
+//        force 'com.fasterxml.jackson.core:jackson-databind:2.6.7.1'
+//
+//    }
+//}
+dependencies {
+    compile group: 'org.slf4j', name:'slf4j-api', version: '1.7.26'
+    compile group: 'ch.qos.logback', name:'logback-classic', version: '1.0.1'
+    compile group: 'ch.qos.logback', name:'logback-core', version: '1.0.1'
+
+    // https://mvnrepository.com/artifact/com.solacesystems/sol-jms
+    compile group: 'com.solacesystems', name: 'sol-jms', version: '10.6.2'
+
+    compileOnly 'org.projectlombok:lombok:1.18.8'
+    annotationProcessor 'org.projectlombok:lombok:1.18.8'
+
+    // https://mvnrepository.com/artifact/org.apache.spark/spark-core
+    compile group: 'org.apache.spark', name: 'spark-core_2.11', version: '2.4.3'
+
+    // https://mvnrepository.com/artifact/org.apache.spark/spark-sql
+    compile group: 'org.apache.spark', name: 'spark-sql_2.11', version: '2.4.3'
+
+    // https://mvnrepository.com/artifact/org.apache.spark/spark-streaming
+    compile group: 'org.apache.spark', name: 'spark-streaming_2.11', version: '2.4.3'
+
+
+    // https://mvnrepository.com/artifact/org.apache.avro/avro
+//    compile (group: 'org.apache.avro', name: 'avro', version: '1.9.0')
+
+}
+
+// Define the main class for the application
+//mainClassName = 'com.solace.spark.streaming.App'
+
+//avro {
+//    createSetters = true
+//    fieldVisibility = "PRIVATE"
+//}
+
+
+task run(type: JavaExec, dependsOn: classes) {
+    main = 'streaming.SimpleApp'
+    classpath sourceSets.main.runtimeClasspath
+    classpath configurations.runtime
+}
+
+shadowJar {
+
+    dependencies {
+        include(dependency(group: 'com.solacesystems', name: 'sol-jms', version: '10.6.2'))
+        include(dependency(group: 'org.slf4j', name:'slf4j-api', version: '1.7.26'))
+        include(dependency(group: 'ch.qos.logback', name:'logback-classic', version: '1.0.1'))
+        include(dependency(group: 'ch.qos.logback', name:'logback-core', version: '1.0.1'))
+    }
+}

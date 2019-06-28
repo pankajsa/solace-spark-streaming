@@ -1,0 +1,398 @@
+CLASSPATH: :./lib/thirdparty/*.jar:./lib/commons-cli-1.2.jar:./lib/commons-lang-2.6.jar:./lib/commons-logging-1.1.3.jar:./lib/geronimo-jms_1.1_spec-1.1.1.jar:./lib/sol-jcsmp-10.5.0.jar:./lib/sol-jms-10.5.0.jar:./lib/sol-sdkperf-8.3.0.8.jar:./lib/sol-sdkperf-jcsmp-8.3.0.8.jar:./lib/sol-sdkperf-jms-8.3.0.8.jar:./lib/optional/log4j-1.2.17.jar:./lib/optional/
+JAVA: /usr/bin/java
+SOLACE_VM_ARGS: -Xms512m -Xmx1024m
+sdkperf_java [options]
+
+  Client control:
+    -cip ip[:port]  IP and port of the client appliance. (e.g. -cip=192.168.160.101)
+    -cu user[@vpn]  Client username and optionally VPN name.  Used only with TRB appliances.
+                    (default is 'perf_client' if client-certificate authentication is not used)
+    -cn string      Root name for clients, index appended (default in pubsub mode is '')
+                    First client by default is 'perf_client0001', second is
+                    'perf_client0002', etc.) (default in client mode is API specified)
+
+  Message Control:
+    -mr number      Publishing rate (msg/sec per client) (default 1)
+    -mn number      Total # messages to publish (across ALL clients). (default is 0)
+    -msx list       Comma sep size list in bytes for auto-generated xml payload portion.
+    -msa list       Comma sep size list in bytes for auto-generated binary attachment portion.
+    -mt string      Message type, one of {direct|nonpersistent|persistent}.
+                    Default is direct
+    -md             Dump all received messages to the screen as text
+
+  Publishing options (All files lists are comma separated, full paths): 
+    Note: All lists of message parts specified must be of equal length.
+    -pfl list       Xml data file list
+    -pal list       Binary attachment list.
+    -ptl list       List of topics for publishing. Note: This list must be 
+                    either of size 1 (same topic used for all msgs) or 
+                    of equal length to message parts specified (topics uniquely specified). 
+    -pql list       List of queues for publishing. Note: This list must be 
+                    either of size 1 (same queue used for all msgs) or 
+                    of equal length to message parts specified (queues uniquely specified). 
+    -ptp string     Publish topic prefix. Use with -ptc to generate a large topic list. 
+    -ptc int        Publish topic count. Use with -ptp to generate a large topic list. 
+    -psv number     Configure pub send vector.  Default is 0, meaning disabled.  Max is 50
+    -psm            Enable smooth publishers.  Enabled by default for latency testing. 
+
+  Subscribing options (All lists are comma separated) 
+    Note: Elements of the given lists are applied round robin to clients.  Ie if you have 
+          2 clients and 2 topics, then each client will get 1 topic.
+    -sxl list       Comma sep list of XPEs applied round robin to clients
+                    Note: Escape quotes with \
+    -sql list       List of queues for subscribing applied round robin to clients
+    -sdl list       List of durable topic endpoints (DTE) for subscribing.  If using DTEs 
+                    and this param is omitted, topic names will be used as DTE names.
+    -stl list       List of topics for subscribing applied round robin to clients
+    -stp string     Subscription topic prefix. Use with -stc to generate a large list of topics.
+    -stc int        Subscription topic count. Use with -stp to generate a large list of topics.
+    -ssl list       List of selector strings applied to filter messages from flows
+    -tte int        Number of temporary topic endpoints to create per client.
+    -tqe int        Number of temporary queue endpoints to create per client.
+    -nsr            No subscription remove. Flag to indicate that sdkperf should
+                    not remove subscriptions on exit.
+
+  Performance measurement options.  Runtime must be > 1 second:
+    -l  flag        Enable latency measurements (default is no latency). 
+    -lb int         Enable latency measurement with # buckets (default 1024 buckets) 
+    -lg int         Latency granularity factor (default 0)
+    -nagle          Enable Nagle's algorithm (RFC 896) to allow higher tcp throughput. (replaces -tnd)
+
+  Tool Specific Options: 
+    -ka number      Keepalive interval in milliseconds.  (Default -1)
+    -z number       Enable compression. (1..9) 1 is fastest, 9 max compression.
+    -epl list       Comma sep list of extra Props passed blindly to the API
+
+  General Parameters:
+
+  General Flags:
+    -soe            Stop client connections or publishing on errors.
+    -v              Show version
+    -h | -?         Show this short help
+    -hm             Show more help.  Ie all other options not shown in basic help
+    -he             Show cli examples help
+
+  -------------------------------------------
+  Advanced Options 
+  -------------------------------------------
+
+  Client control:
+    -cc number      Number of client connections (default 1)
+    -cp password    Client password (default '')
+    -cpf file       Client password file. Loads the password from a file.
+                    This argument is only used when the -cp argument is not provided.
+    -cdp L[:N]      Client DeliverToOne Priority. L for Local priority. N for Network Priority. 
+                    (Priorities are integers 1..4)
+    -ccn            Flag to change client names following reconnect. Rather than correctly setting them on connect. 
+    -cm=string      Client mode.  One of 'reply' or 'sink'.  Default is 'sink'.  
+                    In reply, all messages are reflected by the replyTo topic is used as the destination when sending.
+    -mrdl list      Message Reply Delay list. Determine the amount of time the consumer should wait before responding. Must be used with with the -cm option in 'reply' mode.
+    -cpc            Context per client.  Enable 1 context for each client.
+    -cpt number     Number of publish threads per client (default 1)
+    -cptt number    Total number of publish threads (default 1). Clients will be evenly spread out on all available threads.
+                    Mutually exclusive with -cpt parameter.
+    -crr            Client Replication Reconnect. (default false)
+    -cnl            Client No Local on session and all endpoints.  (default false)
+
+  Message Control:
+    -mrt=string     Publishing rate targets one of 'avg' or 'max'. (default avg)
+    -msxs val       Where val=start,step,end in bytes for a list of xml payload sizes.
+    -msas val       Where val=start,step,end in bytes for a list of binary attachment sizes.
+    -sdm            Used to send canned messages to test structured data messaging.  
+                    Also enables checking on recv.
+    -mdq            Messages should be flagged eligible for the dead message queue
+    -mtl int        Messages will be tagged with time to live (millis) of this value
+    -mee            Messages should be flagged eligible for message eliding
+    -mdd dir        Output all messages received to individual files in this directory.  Only available in sdkperf_jms.
+
+  Publishing options: 
+    -psl list       Binary SMF Serialized Message list.
+    -ptf list       List of files containing topics for publishing.  Note all publishers 
+                    publish to all topics.
+    -pqf list       List of files containing queues for publishing.  Note all publishers 
+                    publish to all queues.
+    -ped int        Publish end delay, The time in seconds
+                    to wait following publishing the final message before
+                    bringing down subscriber data channels.
+                    (Default 2 (seconds))
+    -cos int        The cos value to use in publishing.  Valid range (1..3) or
+                    0 to leave unspecified in API.
+                    Default is 1
+    -pto            Publish to one.  Flag to have publisher set deliver to one field 
+                    transmitted messages.
+    -pso int        Publish stream offset.  Add stream Ids to outgoing messages using this offset
+    -poo int        Publish order offset.  Add this offset to order Ids of outgoing messages
+    -bd int         Duration of burst (double value in seconds), enables bursty publishing. 
+                    Use with inter-burst duration.
+    -ibd int        Optional Inter-burst duration (double value in seconds), specifies duration of inter
+                    burst gaps. Use with burst duration
+    -prt            Publish reply topic flag. Pubs will add reply to topic in each send.  P2P by default.
+    -prq            Publish reply temporary queue flag. The client will create and bind to a temporary queue
+                    which will be used as the reply-to destination for every message published.
+    -prp=string     Publish reply postfix.  Similar to -prt except pub will add publish topic + this
+                    postfix as reply to.
+    -prs=string     Publish reply string.  Similar to -prt except pub will use this string as reply to.
+                    By default, the destination type will be a topic. It is possible to change the destination type
+                    by using the "/QUEUE/" or "/TOPIC/" suffix. For example, -prs=/QUEUE/myQueue would set the
+                    reply-to destination as queue "myQueue".
+    -cpl            Custom Property List. This argument can be used to add custom Properties on messages being published.
+                    Usage: -cpl=type,name,value (e.g. -cpl=Boolean,PropName,true or -cpl=Int,prop1,1,Long,prop2,92).
+                    Accepted types are: String, Boolean {true, false}, Double, Float, Int, Long, Short
+    -nmp=int        Number of message producers per client. Default: 1; Accepted Values: >= 1
+                    The first producer will always be the default producer. When publishing, the client will round-robin
+                    over all available producers.
+    -pmp            Enables Publish Message Priority. Priority is randomly generated on every message sent.
+                    Equivalent to -pmpl=0,10,2,10,3,10,4,10,5,10,6,10,7,10,8,10,9,10
+                    Which translates to 10% probability for all priorities between 0 and 9
+                    Message Priority Stats (-mps) enabled when this parameter is used.
+    -pmpl=list      Publish Message Priority List. Comma-separated, "priority value,percentage"
+                    For example, -pmpl=0,50,9,50 -- 50% of messages will be published at priority 0
+                    while the other 50% will be published at priority 9. The priority is chosen at random
+                    before every message is published based on probabilities defined.
+                    Message Priority Stats (-mps) enabled when this parameter is used.
+
+  Subscribing options (All lists are comma separated) 
+    -sxf list       List of files of the form:
+                    file1[:number],file2[:number],...
+                    the number specifies how many XPEs are used from each file
+    -sqf list       List of files containing queues for subscribing.
+    -sdf list       List of files containing DTEs for subscribing.
+                    If using DTEs and DTE param is omitted, topic names will be used as DTE names.
+    -stf list       List of files containing topics for subscribing.
+    -ssf list       List of files containing selector strings
+    -sd int         Per subscriber per msg delay in milliseconds. Ie slow subscribers.
+                    Use -1 to stop the subscriber from responding to messages.
+                    (default 0)
+    -sdc int        Slow subscriber count.  Number of msgs a subscriber will be slow 
+                    before returning to normal.(default -1, slow forever)
+    -sri int        Subscriber rate interval.  A method of controlling how
+                    often the subscriber calculates throughput.  The subscriber
+                    will calculate rate every sri messages.  (default 1)
+                    Use -1 to disable rate checking.
+    -nsm            No subscription memory.  Flag to disable re-add of subscriptions on 
+                    channel reconnects. 
+    -qb             Enables queue browsing. Option must be used with '-sql' 
+    -qbd F,B        Queue browsing delete instructions.  F is for frequency of delete.  B is 
+                    for number of messages to buffer before deleting
+    -pe             Enables provisioning and cleanup of queues and topic endpoints
+    -pep char       Provisioned Endpoints Permissions. One of (n)one, (r)eadonly, 
+                    (c)onsume, (m)odify, (d)elete
+    -pea int        Provisioned Endpoints Access Type. 0 for Non Exclusive, 1 for Exclusive
+    -peq int        Provisioned Endpoints Quota in MB
+    -pem int        Provisioned Endpoints Max Message Size in bytes
+    -pemr int       Provisioned Endpoints Max Message Redelivery. 0 means retry forever.
+    -per            Provisioned Endpoints Respect TTL flag
+    -pedn string    Provisioned Endpoints Discard Notify Sender flag.
+                    Takes one of the values 'default', 'on', 'off'  as argument.
+    -scn string     Subscription client name.  All subscriptions will be entered on behalf of this client.
+    -fct            Use cut-through persistence for subscriber flows.
+    -cor            Callback on reactor. Message delivery will be on the reactor thread.
+    -mps            Message Priority Stats will be tracked and printed on exit.
+    -mpoc           Message Priority Order Checking. Error will be printed on exit if message
+                    of higher priority is received after a message of lower priority.
+    -fr             Request replay when creating subscriber flow(s).
+                    If no date is provided (-fdr) then replay will be requested from beginning of replay log.
+    -fdr string     Request replay from provided date when creating subscriber flow(s). (e.g. 2018-07-30T10:00:00-04:00).
+
+  Publish On Receive
+   As the name suggests, the Publish On Receive feature will cause the client to send message(s)
+   upon reception of a message using the calling thread and independently of the publisher thread.
+   The user must specify the number of message its client(s) must send upon reception of a message using
+   the -nmpr flag. By default, if no destination is provided, the message will be sent back to the
+   destination from which the message was received. It is possible to specify multiple types of
+   destinations in the same query (i.e. both -porql and -portl can be used simultaneously).
+   It is also possible to vary the message size of each message sent using the -pormsa argument.
+   The Publish on Receive feature is compatible with the -ats argument. The client will use the
+   transacted session to publish if a message was received from a transacted session. It is important
+   to note that the client will only commit or rollback upon reception of the defined number of messages.
+   In other words, specifying the arguments "-ats=2 -nmpr=2" would result in transactions 
+   containing 6 messages (2 received + 4 published).
+
+   -nmpr int        Number of messages to publish on receive. Specifies the number of messages
+                     to publish upon reception of a message. Default: 0
+   -portl list      List of topics (comma separated) to be used for publishing upon message reception.
+   -porql list      List of queues (comma separated) to be used for publishing upon message reception.
+   -pormt string    Message type, one of {direct|nonpersistent|persistent}. Default: direct
+   -pormsa list     Comma separated size list in bytes for auto-generated binary attachment portion.
+   -porrm           If flag is set, the first message published on receive will be the message received
+                    but only if it has a reply-to destination set. The message destination will be set
+                    as the reply-to destination and the reply-to destination will be cleared before the
+                    message is published.
+
+  Client Ack Options (applies only to GD msgs)
+    -ca             Enable client ack for all GD msgs. (default auto ack)
+    -caq int        Queue size for buffering of msgs before processing them for client acks
+    -caf            When queue is full ack all messages in the queue. (Ie burst acks)
+    -cafr           Same as -caf but process the queue in reverse order.
+    -car int        When processing ack queue, choose a message at random
+                    up to this value.  The larger this value the larger the
+                    perf impact of using this option
+    -cask int       Skip this many messages during client ack
+    -cat            Perform client acks in a new thread
+
+  Performance measurement options.  Runtime must be > 1 second:
+    -lat            Enable latency average and 99th stats printout
+    -lfl int        Enable first to last latency stats with specified fanout
+    -lp             Set the latency precision in significant digits after the decimal.
+    -lwu sec        Set latency warmup in seconds.  (default 30.0)
+    -tps            Enable per-subscriber throughput stats 
+    -crc            Enable CRC-32 check of message payload (default off)
+    -oc             Enable out-of-order checking and loss/duplicate detection on clients.
+    -ldd            Enable loss and duplicate detection on clients. This is a subset of the -oc argument, no out-of-order checking will be executed.
+    -om             Enable order memory on clients.
+    -ud             Send userdata in msgs.  Userdata will be the alphabet then
+                    the digits to fill the space
+    -mec            Msg Examine Content - A flag used to tell sdkperf
+                    to check each part of the message and keep stats on msgs 
+                    received.  Ex: num messages with xml payload, etc
+    -cid            Enable stats per consumer id.
+    -di             Enable Discard indication statistics.
+
+  Assured Delivery:
+    Note: For all AD properties the default behavior is to leave the
+          particular CSMP property unmodified
+    -apw int        Set the publisher ack window size.  Valid range is 1 - 255; Default: 50
+                    Please note that Sdkperf's default differs from JCSMP's default of 1.
+    -apa int        Set the publisher ack timeout in milliseconds.  Valid
+                    range is 0 - 5000  
+    -asw int        Set the subscriber ack window size.  Valid range is 1 - 255
+    -asa int        Set the subscriber ack timeout in milliseconds.  Valid
+                    range is 0 - 1500  
+    -awt int        Set the subscriber ack window threshold in percent.  Valid
+                    range is 1-75
+    -amr int        Set the maximum number of resend when a message ack is
+                    missing.  Valid range is >= 0
+    -ats int        AD transaction size.  Valid range is 0..256, default is 0 (disabled)
+    -atxa           Enable XA transaction semantics. Default is disabled.
+    -atop           Enable one-phase commit. Default is two-phase commit.
+    -atts=int       Number of messages per transaction segment. Default is 1.
+    -atst=int       Number of suspended transactions. Default is 0.
+    -atpc           Producer and consumers on the same transaction. Default is on separate transactions.
+    -atxatt         XA transaction idle timeout in seconds for XAResource. Default value is 0 (which is 180 s).
+    -atr            Flag to enable mode where every transaction is rolled back (default is to commit)
+    -atri=int       AD transaction rollback interval.  Used in combination with -ats to
+                    rollback rather than commit at the specified frequency (default is disabled)
+    -att=int        AD transaction idle time.  Used in combination with -ats.  If a partial
+                    uncommitted transaction does not receive a message within <int> ms, a commit
+                    is triggered.  Default is 0 ms (disabled)
+    -afi            Enable active flow indication on each flow
+    -aem=string     Set the ack event mode.  Valid values are: 'per-message' or 'windowed'
+    -aii=int        ACK immediately interval.  Valid range is >= 0, default is 0 (disabled)
+
+  Authentication and SSL Options:
+    Note: For all omitted SSL options, the API defaults are used unless
+          otherwise mentioned.
+    -as=string      Client authentication scheme. Accepted values: basic, client-certificate, kerberos
+    -sslp=string    Comma seperated list of the encryption protocol(s) to use.
+    -sslvc          Enable validation of server certificates. (default is false)
+    -sslvcd         Enable validation of certificate date.    (default is false)
+    -sslcs=string   Comma seperated list of cipher suites to enable.
+    -sslcd=string   SSL Connection Downgrade. Session property specifying a transport protocol that
+                    the connection will be downgraded to after client authentication.
+                    Default: API default (do not downgrade); Accepted Value: PLAIN_TEXT
+   JCSMP, JMS and REST specific arguments.
+    -sslts=string   Path to trust store file.
+    -ssltsp=string  The trust store password.
+    -ssltsf=string  The trust store format.
+    -sslks=string   Path to key store file.
+    -sslksp=string  The key store password.
+    -sslksf=string  The key store format.
+    -sslpka=string  The private key alias.
+    -sslpkp=string  The private key password.
+    -sslep=string   Comma separated list of excluded SSL protocol(s).
+   JNI specific arguments.
+    -sslcf=string   The client certificate file.
+    -sslpk=string   The client private key file.
+    -sslpkp=string  The client private key file password.
+    -ssltsd=string  Path to trust store directory.
+
+  Web Transport Options:
+    -ctp            Client (Web) Transport Protocol. (default is to let API decide)
+    -cwtpl          Client Web Transport Protocol List. (default is to let API decide)
+    -ctpdt          Client Transport Protocol Downgrade Timeout (ms). (default is to let API decide)
+
+  Cache Options (-ch..):
+    -chpn string    Property - Name of cache for requests
+    -chpm int       Property - Max Msgs Per Topic
+    -chpa int       Property - Max age for cached messages in secs
+    -chpt int       Property - Timeout in msec for a given cache request
+    -chrs           Want Request on Subscribe - Tool will perform cache request
+                    on every subscribe performed
+    -chrr double    Request rate (msgs/sec)
+    -chrn int       Request number.  How many requests to send at the rate specified.
+    -chrt int:int   Topic Sequence number range <begin:end> for the cache request. 
+                    Values are passed to API unchanged.
+    -chld string    Live Data Action.  One of QUEUE, FULFILL, FLOW_THRU
+
+  Tool Specific Options: 
+    -rc int         Retry Count.  Number of times API will try to re-establish a failed connection. (Default 3)
+    -rfa string     Reconnect Fail Action. Specify the behavior that the API should take if it is unable to recover guaranteed delivery state after reconnecting the session.
+                    Possible values: DISCONNECT, AUTO_RETRY. (Default: API default)
+    -jndi           Enable JNDI topic and queue lookups.
+    -jod            Optimizes the JMS in direct mode (assumes one
+                    producer/consumer per connection)
+    -jcf string     JMS Connection Factory (default /jms/cf/default)
+    -upt            Tool data is contained in the user property map rather than the binary attachment.
+    -snq int        Modify the subscriber notification queue size (Dispatcher Queue).  (Default is API default)
+    -tm string      Tool mode.  One of 'sdkperf' or 'rtrperf'.  Default is 'sdkperf'.    -api string     Customizes which Solace API is used by sdkperf. Valid values are: JCSMP, JMS, JNI, REST, MQTT 
+                    JAVASCRIPT, ACTIONSCRIPT, SILVERLIGHT. It's also possible to integrate with thirdparty 
+                    by using a value of THIRDPARTY.
+                    (Default is JCSMP.)
+    -ecc string     Used with -api. It specifies a path to an external client class to load which implements the AbstractClient or AbstractJmsClient interface.
+                    (Default is 'com.solacesystems.pubsub.sdkperf.thirdparty.ExtClient'
+
+  Enterprise Java Options: 
+    NOTE: Use these options to interact with the sdkperf-ee application running inside a J2EE application server.
+    -eep string     Specifies sdkperf-ee options (UTF-8 encoded string) embedded as a binary attachment of message.  The message's destination should be one bound to by an sdkperf-ee Message-Driven-Bean. Cannot be used with -msa and -msx parameters.
+                    (e.g.: -eep="-cip 192.168.160.150 -cu default@default -ptl DurTopicBMTMDB -mr 1 -mn 1 -jcf XATCF ") 
+    -istx           Flag: Specifies that the initial session to the Solace router be an XASession.  Use this option if you know the outbound message should be transacted
+
+  REST Client specific flags:
+    -spl list         Server Port List. Define a comma-separated list of ports for REST consumers to connect to.
+    -rcm string       REST Client Mode. Accepted values are: socket or httpclient.
+                      "Socket" uses no third-party libraries and sends REST messages directly on a socket while "HttpClient" sends messages using Apache's HttpClient library.
+                      The REST Client Mode, if not specified with this parameter, will vary depending on which tool mode is used.
+                      When RouterPerf mode is used, the default becomes the Socket Client, when Sdkperf mode is used, the default becomes HttpClient.
+    -rsrco list       REST Server Response Override. Example usage: -rsrco=200,70,204,10,400,10,500,10
+                      Given the example usage, the REST server will return response code 200 70% of the time, 204 10% of the time, 400 10% of the time and 500 10% of the time.
+    -rte string       REST Transfer Encoding. Currently only Chunked Encoding is supported.
+    -rrwt int         Request Reply Wait Time. Can be used for setting the "Solace-Reply-Wait-Time" header on outgoing message.
+    -ripl list        REST (local) IP list. This flag can be used to specify a list of local IPs that will be used in a round-robin fashion for opening outgoing connections to a REST server.
+
+  REST Server specific flags:
+    -rssslks  = string   REST Server SSL key Store Path.
+    -rssslksp = string   REST Server SSL Key Store Password 
+    -rssslpkp = string   REST Server SSL Private Key Password 
+    -rssslts  = string   REST Server SSL Trusted Store Path 
+    -rsssltsp = string   REST Server SSL Trusted Store Password
+    -rssslwca = bool     REST Server SSL Want Client Authentication. If this option is set, client
+                         authentication will be requested.
+                         Default: true
+    -rssslnca = bool     REST Server SSL Need Client Authentication. If this option is set and the
+                         client chooses not to provide authentication information about itself, the
+                         negotiations will stop and the connection will be dropped.
+                         Default: true
+    -rssslecs = bool     REST Server SSL Excluded Cipher Suites.
+                         Comma-separated list of excluded cipher suites.
+                         Default: No excluded cipher suites
+
+  MQTT Client specific flags:
+  -mpq int           MQTT Publisher QoS. Sets the Quality of Service (QoS) of MQTT messages published.
+                     Default: 0; Accepted Values: 0, 1 and 2.
+  -mpr               MQTT Publisher Retain. Messages published will have the retained flag set.
+  -msq int           MQTT Subscription QoS. Sets the Quality of Service (QoS) of subscriptions requested.
+                     Default: 0, Accepted Values: 0, 1 and 2.
+                     It is also possible to overload the default subscription QoS on a per subscription basis
+                     by appending '<TOPIC_END/>qos=<value>' to your topic (e.g.'-stl=test_topic<TOPIC_END/>qos=1')
+  -mcs bool          MQTT flag indicating whether the session should be cleaned.
+                     Default: 1 (true); Accepted values: 1 (true), 0 (false)
+  -mwmt string       MQTT Will Message Topic. MQTT topic on which the will message will be sent.
+  -mwms int          MQTT Will Message Size. Default: 0 
+  -mwmq int          MQTT Will Message Quality of Service (QoS). Default: 0 
+  -mwmr              MQTT Will Message Retained. MQTT flag indicating whether the Will Message should be retained.
+
+  General Flags:
+    -d              Enable debug information.
+    -q              Enable quiet mode.  No command line output during
+                    publishing or subscribing.
+
